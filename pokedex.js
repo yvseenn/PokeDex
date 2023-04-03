@@ -84,7 +84,7 @@ const paintPokemons = (mappedPokemons)=> {
 }
 
 async function fetchPokemon(){
-    const totalPokemons = 12;
+    const totalPokemons = 150;
     const pokemons = [];
     for (let index = 1;index <= totalPokemons; index++) {
         const pokemon = await fetchPokeDex(index);

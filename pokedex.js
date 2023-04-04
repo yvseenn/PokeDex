@@ -1,9 +1,9 @@
-
+console.log("adios");
 async function fetchPokeDex(id) {
 const url = `https://pokeapi.co/api/v2/pokemon/${id}`
 const res = await fetch(url);
     const data = await res.json();
-    // console.log(data);
+    console.log(data);
     return data;
 }
 
@@ -24,7 +24,8 @@ const paintPokemons = (mappedPokemons)=> {
     for (const pokemon of mappedPokemons) {
         
         const card$$ = document.createElement("div")
-        card$$.classList.add("card")    //Card div                       
+        card$$.classList.add("card")    //Card div
+        card$$.setAttribute('data-aos','fade-down')                       
         pokemonPage$$.appendChild(card$$)
         
         const flipCardInner$$ =document.createElement("div")
@@ -69,7 +70,7 @@ const paintPokemons = (mappedPokemons)=> {
         if (pokemon.type.includes("fire")) {
             img$$.style.background = 'url("https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExY2U3NWE2ZWQ3MjU2YzkyNjYwNTkzODcyZWIyZDFkNTY1MzMwYzU4NSZjdD1n/fiyQQLci4d1w6Njojo/giphy.gif")';
           } else if (pokemon.type.includes("grass") || pokemon.type.includes("bug") || pokemon.type.includes("ground")) {
-            img$$.style.background = 'url("https://cutewallpaper.org/21/pokemon-grass-background/Pokemon-forest-by-BlazingIfrit-Fur-Affinity-dot-net.jpg")';
+            img$$.style.background = 'url("https://media.giphy.com/media/3osxYsSSxjWhZw0BUY/giphy.gif")';
           } else if (pokemon.type.includes("electric")){
             img$$.style.background = 'url("https://media.giphy.com/media/azTii0LN5dOhjLHRrm/giphy.gif")';
           } else if (pokemon.type.includes("water")){
@@ -98,7 +99,7 @@ const mapPokemons = (pokemonsWithoutMapping) => { // mapping from main API
     return pokemonsWithoutMapping.map((pokemon)=>({
         name: pokemon.name,
         // order: pokemon.order,
-        image: pokemon.sprites.front_default,
+        image: pokemon.sprites.other["official-artwork"]["front_default"],
         abilities: pokemon.abilities.map((ability) => ability.ability.name),
         type: pokemon.types.map((type) => type.type.name).join(', '),
         pokemonNum: pokemon.id,
@@ -142,7 +143,7 @@ async function init() {
     paintPokemons(mappedPokemons);
     drawInput(mappedPokemons);
 
-
+    AOS.init();
 }
 
   init();

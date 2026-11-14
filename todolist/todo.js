@@ -1,97 +1,105 @@
-//*
+const STORAGE_KEY = "pokedex-todo-tasks";
 
-const div$$ = document.createElement('div');
-div$$.classList.add('task-list-container');
-document.body.appendChild(div$$);
+//* Estado: lista de tareas { id, text, done }. Se guarda en localStorage.
+const loadTasks = () => {
+  try {
+    const tasks = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return Array.isArray(tasks) ? tasks : [];
+  } catch {
+    return [];
+  }
+};
 
-const btn$$ = document.createElement('button');
-btn$$.classList.add('task-list-btn');
+let tasks = loadTasks();
+
+const saveTasks = () => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  } catch {
+    // Modo privado o almacenamiento bloqueado: la lista funciona igual, pero sin persistir
+  }
+};
+
+const createElement = (tag, className, text) => {
+  const el$$ = document.createElement(tag);
+  if (className) el$$.className = className;
+  if (text !== undefined) el$$.textContent = text;
+  return el$$;
+};
+
+//* Estructura
+const div$$ = createElement("div", "task-list-container");
+document.querySelector(".container").appendChild(div$$);
+
+const form$$ = createElement("form", "task-list-form");
+const input$$ = createElement("input", "task-list-bar");
+input$$.placeholder = "Añade una tarea y pulsa Enter...";
+input$$.setAttribute("aria-label", "Nueva tarea");
+input$$.maxLength = 200;
+const btn$$ = createElement("button", "task-list-btn");
+btn$$.type = "submit";
+btn$$.setAttribute("aria-label", "Añadir tarea");
 btn$$.innerHTML = '<span class="add-icon">+</span>';
-div$$.appendChild(btn$$);
+form$$.append(btn$$, input$$);
 
-const input$$ = document.createElement('input');
-input$$.classList.add('task-list-bar');
-input$$.setAttribute('placeholder', 'Add a task and press Enter...');
-div$$.appendChild(input$$);
+const ul$$ = createElement("ul", "task-list");
+const completed$$ = createElement("ul", "task-list completed");
+const empty$$ = createElement("p", "task-list-empty", "No hay tareas todavía");
 
-const ul$$ = document.createElement('ul');
-ul$$.classList.add('task-list');
-div$$.appendChild(ul$$);
+const clearBtn$$ = createElement("button", "clear-completed-btn", "Borrar completadas");
+const clearAllBtn$$ = createElement("button", "clear-all-btn", "Borrar todas");
 
-const completed$$ = document.createElement('ul');
-completed$$.classList.add('task-list', 'completed');
-div$$.appendChild(completed$$);
+div$$.append(form$$, empty$$, ul$$, completed$$, clearBtn$$, clearAllBtn$$);
 
-const clearBtn$$ = document.createElement('button');
-clearBtn$$.classList.add('clear-completed-btn');
-clearBtn$$.textContent = 'Clear Completed';
-div$$.appendChild(clearBtn$$);
+//* Pintado a partir del estado
+const createTask = (task) => {
+  const task$$ = createElement("li", "task-list-item");
+  if (task.done) task$$.classList.add("task-list-item--completed");
 
-const clearAllBtn$$ = document.createElement('button');
-clearAllBtn$$.classList.add('clear-all-btn');
-clearAllBtn$$.textContent = 'Clear All';
-div$$.appendChild(clearAllBtn$$);
+  const text$$ = createElement("span", "task-text", task.text);
 
-btn$$.addEventListener('click', addTask);
-input$$.addEventListener('keydown', function(event) {
-  if (event.keyCode === 13) {
-    addTask();
-  }
-});
+  const completeBtn$$ = createElement("button", "complete-task-btn");
+  completeBtn$$.setAttribute("aria-label", task.done ? "Marcar como pendiente" : "Marcar como completada");
+  completeBtn$$.innerHTML = `<span class="complete-icon">${task.done ? "↺" : "✓"}</span>`;
+  completeBtn$$.addEventListener("click", () => updateTasks(tasks.map((t) => (t.id === task.id ? { ...t, done: !t.done } : t))));
 
-function addTask() {
-  const taskText = input$$.value.trim();
-  if (taskText === '') {
-    // Don't add empty tasks
-    return;
-  }
-
-  const task$$ = document.createElement('li');
-  task$$.textContent = taskText;
-  task$$.classList.add('task-list-item');
-
-  const deleteBtn$$ = document.createElement('button');
-  deleteBtn$$.classList.add('delete-task-btn');
+  const deleteBtn$$ = createElement("button", "delete-task-btn");
+  deleteBtn$$.setAttribute("aria-label", "Borrar tarea");
   deleteBtn$$.innerHTML = '<span class="delete-icon">x</span>';
-  task$$.appendChild(deleteBtn$$);
+  deleteBtn$$.addEventListener("click", () => updateTasks(tasks.filter((t) => t.id !== task.id)));
 
-  const completeBtn$$ = document.createElement('button');
-  completeBtn$$.classList.add('complete-task-btn');
-  completeBtn$$.innerHTML = '<span class="complete-icon">✓</span>';
-  task$$.appendChild(completeBtn$$);
+  task$$.append(text$$, completeBtn$$, deleteBtn$$);
+  return task$$;
+};
 
-  ul$$.appendChild(task$$);
-  input$$.value = ''; // clear the input field
+const render = () => {
+  ul$$.replaceChildren(...tasks.filter((t) => !t.done).map(createTask));
+  completed$$.replaceChildren(...tasks.filter((t) => t.done).map(createTask));
+  empty$$.hidden = tasks.length > 0;
+  clearBtn$$.disabled = !tasks.some((t) => t.done);
+  clearAllBtn$$.disabled = tasks.length === 0;
+};
 
-  // Add animation class to task element
-  setTimeout(() => {
-    task$$.classList.add('task-list-item--show');
-  }, 10);
+const updateTasks = (newTasks) => {
+  tasks = newTasks;
+  saveTasks();
+  render();
+};
 
-  deleteBtn$$.addEventListener('click', function() {
-    task$$.parentNode.removeChild(task$$);
-  });
-
-  completeBtn$$.addEventListener('click', function() {
-    task$$.classList.add('task-list-item--completed');
-    completed$$.appendChild(task$$);
-  });
-}
-
-clearBtn$$.addEventListener('click', function() {
-  const completedTasks$$ = completed$$.querySelectorAll('.task-list-item');
-  completedTasks$$.forEach(function(task$$) {
-    task$$.parentNode.removeChild(task$$);
-  });
+//* Eventos
+form$$.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const text = input$$.value.trim();
+  if (!text) return; // no añadimos tareas vacías
+  updateTasks([...tasks, { id: Date.now(), text, done: false }]);
+  input$$.value = "";
+  input$$.focus();
 });
 
-clearAllBtn$$.addEventListener('click', function() {
-  const allTasks$$ = document.querySelectorAll('.task-list-item');
-  allTasks$$.forEach(function(task$$) {
-    task$$.parentNode.removeChild(task$$);
-  });
-  const completedTasks$$ = document.querySelectorAll('.completed .task-list-item');
-  completedTasks$$.forEach(function(task$$) {
-    task$$.parentNode.removeChild(task$$);
-  });
+clearBtn$$.addEventListener("click", () => updateTasks(tasks.filter((t) => !t.done)));
+
+clearAllBtn$$.addEventListener("click", () => {
+  if (confirm("¿Seguro que quieres borrar todas las tareas?")) updateTasks([]);
 });
+
+render();

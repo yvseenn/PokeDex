@@ -1,39 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <meta name="description" content="Pokédex con los primeros 300 pokémon usando la PokeAPI" />
+    <title>Pokédex</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik+Iso&display=swap" rel="stylesheet" />
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
     <link rel="stylesheet" href="./style.css" />
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js" defer></script>
-
-
     <script src="pokedex.js" defer></script>
   </head>
   <body>
-    <div class="img-box">
+    <header class="img-box">
       <img
         class="pokemonLogo"
         src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/2560px-International_Pok%C3%A9mon_logo.svg.png"
-        alt="pokemonLogo"
+        alt="Pokémon"
       />
-    </div>
+    </header>
 
-    <div class="input-box">
+    <nav class="input-box">
       <input
         type="search"
-        placeholder="Search for pokemon..."
-        class="search-bar"/>
+        placeholder="Nombre, número o tipo..."
+        aria-label="Buscar pokémon por nombre, número o tipo"
+        class="search-bar"
+      />
+      <a href="./todolist/todolist.html" class="todo-box">To-do List</a>
+    </nav>
 
-        <a href="./todolist/todolist.html" class="todo-box">To-do List</a>
-    </div>
+    <p class="status" role="status" aria-live="polite" hidden></p>
 
-    <div class="container">
-
-          
-      <!-- linea 19 a 84 en js -->
-    </div>
+    <main class="container"></main>
   </body>
 </html>

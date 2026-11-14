@@ -1,3 +1,22 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-decoration: none;
+}
+
+body {
+  font-family: "Rubik Iso", cursive;
+  text-transform: uppercase;
+}
+
+[hidden] {
+  display: none !important;
+}
+
 body {
   background-image: url(https://wallpaperaccess.com/full/24936.jpg);
   background-attachment: fixed;
@@ -179,12 +198,74 @@ body {
   background-color: #c0392b;
 }
 
-* {
-  @import url("https://fonts.googleapis.com/css2?family=Barrio&family=Hanalei+Fill&family=Piedra&family=Press+Start+2P&family=Rubik+Dirt&family=Rubik+Iso&display=swap");
-  font-family: "Rubik Iso", cursive;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  text-decoration: none;
-  text-transform: uppercase;
-}/*# sourceMappingURL=todolistStyle.css.map */
+.pokemonLogo {
+  width: min(60%, 600px);
+  display: block;
+  margin: 0 auto 30px;
+}
+
+.back-link {
+  display: block;
+  width: fit-content;
+  margin: 0 auto 30px;
+  padding: 10px 16px;
+  background-color: #ffffff;
+  color: #000000;
+  transition: background-color 0.3s, color 0.3s;
+}
+.back-link:hover, .back-link:focus-visible {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.task-list-container {
+  width: calc(100% - 32px);
+  margin-bottom: 60px;
+}
+
+.task-list-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.task-list-bar {
+  font-family: inherit;
+}
+
+.task-list-empty {
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.task-text {
+  flex: 1;
+  overflow-wrap: anywhere;
+  text-transform: none;
+  font-family: system-ui, sans-serif;
+}
+
+.task-list.completed {
+  margin-bottom: 10px;
+}
+
+.clear-completed-btn:disabled,
+.clear-all-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.task-list-btn:focus-visible,
+.task-list-bar:focus-visible,
+.delete-task-btn:focus-visible,
+.complete-task-btn:focus-visible {
+  outline: 3px solid #3498db;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pokemonLogo {
+    animation: none;
+  }
+}

@@ -1,142 +1,169 @@
-console.log("adios");
+const API_URL = "https://pokeapi.co/api/v2/pokemon";
+const TOTAL_POKEMONS = 300;
+const BATCH_SIZE = 50; // peticiones en paralelo por lote, para no saturar la API
 
-//*
-async function fetchPokeDex(id) {
-const url = `https://pokeapi.co/api/v2/pokemon/${id}`
-const res = await fetch(url);
-    const data = await res.json();
-    console.log(data);
-    return data;
-}
-
-//*
-const pokedex$$=document.querySelector('h1')
-const pokemonPage$$ = document.querySelector(".container")
-console.log(pokemonPage$$);
-
-//*
-const paintPokemons = (mappedPokemons)=> {
-    pokemonPage$$.innerHTML =''
-    
-
-    for (const pokemon of mappedPokemons) {
-        
-
-        const card$$ = document.createElement("div")
-        card$$.classList.add("card")    //Card div
-        card$$.setAttribute('data-aos','fade-down')                       
-        pokemonPage$$.appendChild(card$$)
-        
-
-        const flipCardInner$$ =document.createElement("div")
-        flipCardInner$$.classList.add("flipCardInner")
-        card$$.appendChild(flipCardInner$$)
-
-
-        const flipCardFront$$ =document.createElement("div")
-        flipCardFront$$.classList.add("flipCardFront")
-        flipCardInner$$.appendChild(flipCardFront$$)
-
-
-        const flipCardBack$$ =document.createElement("div")
-        flipCardBack$$.classList.add("flipCardBack")
-        flipCardInner$$.appendChild(flipCardBack$$)
-
-
-        const pokemonNum$$ = document.createElement("h3")
-        pokemonNum$$.classList.add("pokemon-number")
-        flipCardBack$$.appendChild(pokemonNum$$)
-        pokemonNum$$.textContent=pokemon.pokemonNum
-        
-        const cardName$$ = document.createElement('h3')
-        cardName$$.classList.add("card-title")
-        flipCardBack$$.appendChild(cardName$$)
-        cardName$$.textContent= pokemon.name
-
-
-        const img$$ = document.createElement("img")
-        img$$.classList.add("card-image")
-        flipCardFront$$.appendChild(img$$)
-        img$$.setAttribute("src", pokemon.image)
-
-
-        const abilities$$ = document.createElement("p")
-        abilities$$.classList.add("card-subtitle")
-        flipCardBack$$.appendChild(abilities$$)
-        abilities$$.textContent=pokemon.abilities.join(', ')
-
-
-        const type$$ = document.createElement("p")
-        type$$.classList.add("card-subtitle")
-        flipCardBack$$.appendChild(type$$)
-        type$$.textContent=pokemon.type
-//* Conditional to apply background images depending on the type of pokemon 
-        if (pokemon.type.includes("fire")) {
-            img$$.style.background = 'url("https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExY2U3NWE2ZWQ3MjU2YzkyNjYwNTkzODcyZWIyZDFkNTY1MzMwYzU4NSZjdD1n/fiyQQLci4d1w6Njojo/giphy.gif")';
-          } else if (pokemon.type.includes("grass") || pokemon.type.includes("bug") || pokemon.type.includes("ground")) {
-            img$$.style.background = 'url("https://media.giphy.com/media/3osxYsSSxjWhZw0BUY/giphy.gif")';
-          } else if (pokemon.type.includes("electric")){
-            img$$.style.background = 'url("https://media.giphy.com/media/azTii0LN5dOhjLHRrm/giphy.gif")';
-          } else if (pokemon.type.includes("water")){
-            img$$.style.background = 'url(https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTQzNzliY2VhYzJlNmQ2MWUyOWI2YjRjNmZmYzkzMzJmM2VjYTRiMiZjdD1n/7n1qnrzfg5pPa/giphy.gif)';
-          } else {
-             img$$.style.background = 'url(https://media.giphy.com/media/5HK4TiiBeLSZq/giphy.gif)';
-          }
-    }
-}
-
-//* Loop to show only the requested number of pokemons using their id
-async function fetchPokemon(){
-    const requestedPokemons = 300;
-    const pokemons = [];
-    for (let index = 1;index <= requestedPokemons; index++) {
-        const pokemon = await fetchPokeDex(index);
-        pokemons.push(pokemon);
-}
-return pokemons;
-}
-
-//*Mapping required data from the API
-const mapPokemons = (pokemonsWithoutMapping) => {
-    return pokemonsWithoutMapping.map((pokemon)=>({
-        name: pokemon.name,
-        image: pokemon.sprites.other["official-artwork"]["front_default"],
-        abilities: pokemon.abilities.map((ability) => ability.ability.name),
-        type: pokemon.types.map((type) => type.type.name).join(', '),
-        pokemonNum: pokemon.id,
-    }))
-}
-
-//*Creating the search bar for the input field
-const drawInput = (mappedPokemons) => { 
-    const input$$ = document.querySelector('input');
-    input$$.addEventListener("input", () => {
-    searchPokemons(input$$.value,mappedPokemons);
-    });
+const TYPE_BACKGROUNDS = {
+  fire: "fire",
+  grass: "nature",
+  bug: "nature",
+  ground: "nature",
+  electric: "electric",
+  water: "water",
 };
 
-//*Creating the required filters for the input field
-const searchPokemons = (filter, pokemons) => {
-    // console.log(pokemons);
-    let filteredPokemon= pokemons.filter((pokemon)=>pokemon.name.toLowerCase().includes(filter.toLowerCase()))
-    // console.log(filteredPokemon);
-    paintPokemons(filteredPokemon)
+const container$$ = document.querySelector(".container");
+const input$$ = document.querySelector(".search-bar");
+const status$$ = document.querySelector(".status");
+
+const setStatus = (message) => {
+  status$$.textContent = message;
+  status$$.hidden = !message;
+};
+
+//* Petición de un único pokémon
+async function fetchPokemon(id) {
+  const res = await fetch(`${API_URL}/${id}`);
+  if (!res.ok) throw new Error(`Error ${res.status} al cargar el pokémon ${id}`);
+  return res.json();
 }
 
+//* Descarga todos los pokémon por lotes en paralelo (mucho más rápido que uno a uno)
+async function fetchAllPokemons(total) {
+  const pokemons = [];
+  for (let start = 1; start <= total; start += BATCH_SIZE) {
+    const ids = [];
+    for (let id = start; id < start + BATCH_SIZE && id <= total; id++) ids.push(id);
 
+    const results = await Promise.allSettled(ids.map(fetchPokemon));
+    for (const result of results) {
+      if (result.status === "fulfilled") pokemons.push(result.value);
+      else console.warn(result.reason);
+    }
+    setStatus(`Cargando pokémon... ${Math.min(start + BATCH_SIZE - 1, total)}/${total}`);
+  }
+  return pokemons;
+}
 
-//*
+//* Nos quedamos sólo con los datos que necesitamos de la API
+const mapPokemons = (pokemons) =>
+  pokemons.map((pokemon) => ({
+    id: pokemon.id,
+    name: pokemon.name,
+    image:
+      pokemon.sprites.other?.["official-artwork"]?.front_default ?? pokemon.sprites.front_default,
+    abilities: pokemon.abilities.map(({ ability }) => ability.name),
+    types: pokemon.types.map(({ type }) => type.name),
+  }));
+
+const backgroundFor = (types) => {
+  for (const type of types) {
+    if (TYPE_BACKGROUNDS[type]) return TYPE_BACKGROUNDS[type];
+  }
+  return "default";
+};
+
+const createElement = (tag, className, text) => {
+  const el$$ = document.createElement(tag);
+  if (className) el$$.className = className;
+  if (text !== undefined) el$$.textContent = text;
+  return el$$;
+};
+
+//* Crea la carta (anverso con imagen, reverso con los datos)
+const createCard = (pokemon) => {
+  const card$$ = createElement("article", "card");
+  card$$.tabIndex = 0;
+  card$$.setAttribute("role", "button");
+  card$$.setAttribute("aria-label", `${pokemon.name}, número ${pokemon.id}. Pulsa para girar la carta`);
+  card$$.setAttribute("data-aos", "fade-down");
+
+  const inner$$ = createElement("div", "flipCardInner");
+  const front$$ = createElement("div", "flipCardFront");
+  const back$$ = createElement("div", "flipCardBack");
+
+  const img$$ = createElement("img", `card-image bg-${backgroundFor(pokemon.types)}`);
+  img$$.src = pokemon.image;
+  img$$.alt = pokemon.name;
+  img$$.loading = "lazy";
+  front$$.appendChild(img$$);
+
+  back$$.append(
+    createElement("h3", "pokemon-number", `#${String(pokemon.id).padStart(3, "0")}`),
+    createElement("h3", "card-title", pokemon.name),
+    createElement("p", "card-subtitle", pokemon.abilities.join(", ")),
+    createElement("p", "card-subtitle", pokemon.types.join(", "))
+  );
+
+  inner$$.append(front$$, back$$);
+  card$$.appendChild(inner$$);
+
+  // En móvil no hay hover: permitimos girar la carta con click / teclado
+  const flip = () => card$$.classList.toggle("is-flipped");
+  card$$.addEventListener("click", flip);
+  card$$.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      flip();
+    }
+  });
+
+  return card$$;
+};
+
+//* Pinta todas las cartas una sola vez
+const paintPokemons = (pokemons) => {
+  const fragment = document.createDocumentFragment();
+  const cards = pokemons.map((pokemon) => {
+    const card$$ = createCard(pokemon);
+    fragment.appendChild(card$$);
+    return { pokemon, card$$ };
+  });
+  container$$.replaceChildren(fragment);
+  return cards;
+};
+
+//* Filtro por nombre, número o tipo. En lugar de repintar, ocultamos/mostramos cartas.
+const matches = (pokemon, query) =>
+  !query ||
+  pokemon.name.includes(query) ||
+  String(pokemon.id) === query.replace(/^#0*/, "") ||
+  pokemon.types.some((type) => type.includes(query));
+
+const setupSearch = (cards) => {
+  const search = () => {
+    const query = input$$.value.trim().toLowerCase();
+    let visible = 0;
+    for (const { pokemon, card$$ } of cards) {
+      const show = matches(pokemon, query);
+      card$$.hidden = !show;
+      if (show) visible++;
+    }
+    setStatus(visible ? "" : `No se ha encontrado ningún pokémon para "${input$$.value.trim()}"`);
+    if (window.AOS) AOS.refresh();
+  };
+
+  let timeout;
+  input$$.addEventListener("input", () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(search, 150);
+  });
+};
+
 async function init() {
-    const pokemons = await fetchPokemon();
-    const mappedPokemons = mapPokemons(pokemons);
-    // console.log(pokemons);
-    paintPokemons(mappedPokemons);
-    drawInput(mappedPokemons);
-//* Styles linked from https://michalsnik.github.io/aos/
-    AOS.init();
+  setStatus("Cargando pokémon...");
+  try {
+    const pokemons = mapPokemons(await fetchAllPokemons(TOTAL_POKEMONS));
+    if (!pokemons.length) throw new Error("No se ha podido cargar ningún pokémon");
+
+    const cards = paintPokemons(pokemons);
+    setupSearch(cards);
+    setStatus("");
+    //* Animaciones de https://michalsnik.github.io/aos/
+    if (window.AOS) AOS.init({ once: true });
+  } catch (error) {
+    console.error(error);
+    setStatus("Ups... no se han podido cargar los pokémon. Recarga la página para intentarlo de nuevo.");
+  }
 }
 
-//*
-  init();
-
-
+init();

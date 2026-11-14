@@ -31,22 +31,45 @@ body {
   
   }
   
+  .input-box {
+    gap: 20px;
+    padding: 0 16px;
+  }
+
   .search-bar {
-    width: 300px;
+    width: min(300px, 100%);
+    font-family: inherit;
+    font-size: 14px;
     height: 40px;
     text-align: center;
   }
 
   .todo-box {
+    display: inline-flex;
+    align-items: center;
     background-color: #ffffff;
     color: #000000;
-    padding: 10px;
+    padding: 0 16px;
     font-size: 16px;
+    height: 40px;
     cursor: pointer;
-    transition: background-color 0.3s;
-    margin-left: 20px;
-    height: 20px;
-    animation: alternate 3s infinite;
+    transition: background-color 0.3s, color 0.3s;
+
+    &:hover,
+    &:focus-visible {
+      background-color: #000000;
+      color: #ffffff;
+    }
+  }
+
+  .status {
+    text-align: center;
+    margin: 40px auto 0;
+    padding: 12px 20px;
+    max-width: 600px;
+    background-color: rgba(0, 0, 0, 0.75);
+    color: whitesmoke;
+    border-radius: 50px;
   }
   
   .container {
@@ -54,19 +77,13 @@ body {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-around;
-    max-width: 100%;
-    height: fit-content;
-    margin: 75px 75px 75px 75px;
-    padding: 60px 60px 60px 60px;
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 16px 60px;
   }
   
-  .card {    
-    width: 250px;
-    padding: 16px;
+  .card {
     background-size: cover;
-    margin: 8px;
-    margin-bottom: 16px;
-    border-radius: 20px;
     box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px,
     rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
     border: solid 0.3px #000000;
@@ -78,13 +95,18 @@ body {
     margin: 20px;
     perspective: 1000px;
     border-radius: 25px;
+
+    &:focus-visible {
+      outline: 4px solid #ffcb05;
+      outline-offset: 4px;
+    }
   }
   .card-title {
     text-transform: uppercase;
     font-size: 32px;
     font-weight: normal;
     text-align: center;
-    background-color: black;;
+    background-color: black;
     color: whitesmoke;
     border-radius: 50px;
     margin-bottom: 30px;
@@ -93,7 +115,6 @@ body {
   .card-subtitle {
     font-weight:900;
     font-size: larger;
-    margin-top: 5px;
     text-align: center;
     color: rgb(0, 0, 0);
     margin-bottom: 30px;
@@ -109,17 +130,32 @@ body {
     color: whitesmoke;
     background-color: #000000;
     font-weight: 900;
-    border-radius: 100%;
     border-radius: 50px;
     margin-bottom: 30px;
     margin-top: 20px;
-  
   }
   
   .card-image {
     width: 100%;
     height: 100%;
-    border-radius: 25px;;
+    object-fit: contain;
+    border-radius: 25px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  $type-backgrounds: (
+    fire: "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExY2U3NWE2ZWQ3MjU2YzkyNjYwNTkzODcyZWIyZDFkNTY1MzMwYzU4NSZjdD1n/fiyQQLci4d1w6Njojo/giphy.gif",
+    nature: "https://media.giphy.com/media/3osxYsSSxjWhZw0BUY/giphy.gif",
+    electric: "https://media.giphy.com/media/azTii0LN5dOhjLHRrm/giphy.gif",
+    water: "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTQzNzliY2VhYzJlNmQ2MWUyOWI2YjRjNmZmYzkzMzJmM2VjYTRiMiZjdD1n/7n1qnrzfg5pPa/giphy.gif",
+    default: "https://media.giphy.com/media/5HK4TiiBeLSZq/giphy.gif",
+  );
+
+  @each $name, $url in $type-backgrounds {
+    .bg-#{$name} {
+      background-image: url($url);
+    }
   }
   
   .flipCardInner {
@@ -138,15 +174,49 @@ body {
   }
   
   .flipCardBack {
-    transform: rotateY(180deg); 
-    
-  }
-  
-  .card:hover .flipCardInner {
-    transform: rotateY(
-      180deg); 
-  
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px;
+    transform: rotateY(180deg);
+
+    > * {
+      margin: 0;
+      padding: 6px 12px;
+      overflow-wrap: anywhere;
     }
+  }
+
+  .card.is-flipped .flipCardInner {
+    transform: rotateY(180deg);
+  }
+
+  @media (hover: hover) {
+    .card:hover .flipCardInner {
+      transform: rotateY(180deg);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .pokemonLogo {
+      width: 85%;
+    }
+
+    .card-title {
+      font-size: 26px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pokemonLogo {
+      animation: none;
+    }
+
+    .flipCardInner {
+      transition: none;
+    }
+  }
   
 
   @keyframes wobble {
